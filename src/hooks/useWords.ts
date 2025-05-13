@@ -60,6 +60,23 @@ export const useWords = () => {
     );
   }, []);
 
+  const updateWord = useCallback((wordId: string, updates: { english?: string; russian?: string }) => {
+    setWords(prevWords => 
+      prevWords.map(word => 
+        word.id === wordId
+          ? {
+              ...word,
+              ...updates,
+            }
+          : word
+      )
+    );
+  }, []);
+
+  const deleteWord = useCallback((wordId: string) => {
+    setWords(prevWords => prevWords.filter(word => word.id !== wordId));
+  }, []);
+
   const clearAllWords = useCallback(() => {
     setWords([]);
   }, []);
@@ -96,6 +113,8 @@ export const useWords = () => {
     words,
     addWords,
     updateWordStats,
+    updateWord,
+    deleteWord,
     clearAllWords,
     getStudyWords,
   };

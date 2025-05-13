@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import FileImport from '../components/FileImport';
 import { useWords } from '../hooks/useWords';
-import { ListPlus, AlertCircle, Check } from 'lucide-react';
+import { ListPlus, AlertCircle, Check, Edit, Trash2 } from 'lucide-react';
 
 const ImportPage: React.FC = () => {
-  const { words, addWords, clearAllWords } = useWords();
-  const [importSuccess, setImportSuccess] = React.useState(false);
+  const { words, addWords, clearAllWords, updateWord, deleteWord } = useWords();
+  const [importSuccess, setImportSuccess] = useState(false);
+  const [editingWordId, setEditingWordId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState({ english: '', russian: '' });
 
   const handleImport = (importedWords: { english: string; russian: string }[]) => {
     addWords(importedWords);
@@ -15,6 +17,35 @@ const ImportPage: React.FC = () => {
     setTimeout(() => {
       setImportSuccess(false);
     }, 3000);
+  };
+
+  const startEditing = (wordId: string, english: string, russian: string) => {
+    setEditingWordId(wordId);
+    setEditValues({ english, russian });
+  };
+
+  const handleEditChange = (field: 'english' | 'russian', value: string) => {
+    setEditValues(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const saveEdit = () => {
+    if (editingWordId) {
+      updateWord(editingWordId, editValues);
+      setEditingWordId(null);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingWordId(null);
+  };
+
+  const handleDeleteWord = (wordId: string) => {
+    if (confirm('Вы уверены, что хотите удалить это слово?')) {
+      deleteWord(wordId);
+    }
   };
 
   return (
@@ -65,16 +96,73 @@ const ImportPage: React.FC = () => {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Russian
                     </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {words.slice(0, 50).map((word, index) => (
                     <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                       <td className="px-6 py-2 text-sm text-gray-900">
-                        {word.english}
+                        {editingWordId === word.id ? (
+                          <input
+                            type="text"
+                            value={editValues.english}
+                            onChange={(e) => handleEditChange('english', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-md"
+                            autoFocus
+                          />
+                        ) : (
+                          word.english
+                        )}
                       </td>
                       <td className="px-6 py-2 text-sm text-gray-900">
-                        {word.russian}
+                        {editingWordId === word.id ? (
+                          <input
+                            type="text"
+                            value={editValues.russian}
+                            onChange={(e) => handleEditChange('russian', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-md"
+                          />
+                        ) : (
+                          word.russian
+                        )}
+                      </td>
+                      <td className="px-6 py-2 text-sm text-gray-900">
+                        {editingWordId === word.id ? (
+                          <div className="flex space-x-2">
+                            <button 
+                              onClick={saveEdit}
+                              className="text-green-600 hover:text-green-900"
+                            >
+                              Save
+                            </button>
+                            <button 
+                              onClick={cancelEdit}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex space-x-3">
+                            <button 
+                              onClick={() => startEditing(word.id, word.english, word.russian)}
+                              className="text-indigo-600 hover:text-indigo-900"
+                              title="Редактировать"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteWord(word.id)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Удалить"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
